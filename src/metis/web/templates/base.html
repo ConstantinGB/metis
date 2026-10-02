@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en" data-theme="{{ current_theme() }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}METIS{% endblock %}</title>
+<link rel="stylesheet" href="/static/metis.css">
+</head>
+<body{% if project is defined and project %} data-project="{{ project.name }}"{% endif %}>
+<nav>
+  <a class="brand" href="/">METIS</a>
+  {% block nav %}{% endblock %}
+  <span class="spacer"></span>
+  <a href="/settings">Settings</a>
+</nav>
+<main class="{% block mainclass %}page{% endblock %}">
+{% block content %}{% endblock %}
+</main>
+<script src="/static/metis.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+services:
+  api:
+    build: .
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgres://db/web

@@ -1,0 +1,14 @@
+<section class="card{% if card.ai %} has-ai{% endif %}" data-col="{{ col }}" data-node="{{ card.node_id }}"{% if card.stage %} data-stage="{{ card.stage }}"{% endif %}>
+  <header>
+    <h2>{{ card.title }}</h2>
+    <div class="subtitle">{{ card.subtitle|mdi|safe }}</div>
+  </header>
+  <div class="body">{{ html|safe }}</div>
+  {% if card.source_node %}
+  <details class="source" data-src="/p/{{ pname }}/source?node={{ quote(card.source_node) }}"{% if card.source_open %} data-open="1"{% endif %}>
+    <summary>Source ({{ card.source_lines }} line{{ 's' if card.source_lines != 1 }})
+      <label class="hl-toggle"><input type="checkbox" class="hl" checked> Highlight</label></summary>
+    <div class="src-body"><p class="muted small">loading…</p></div>
+  </details>
+  {% endif %}
+</section>

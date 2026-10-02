@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Settings · METIS{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+{% if saved %}<p class="ok">Saved.</p>{% endif %}
+<form method="post" action="/settings" class="settings">
+  <label>Theme <select name="theme">
+    <option value="dark"{% if settings.theme == 'dark' %} selected{% endif %}>Dark</option>
+    <option value="light"{% if settings.theme == 'light' %} selected{% endif %}>Light</option>
+  </select></label>
+  <label>AI model <input name="model" value="{{ settings.model }}"> <span class="muted small">e.g. claude-sonnet-5, claude-opus-5</span></label>
+  <label>Packet model (cheap per-file summaries) <input name="packet_model" value="{{ settings.packet_model }}"> <span class="muted small">e.g. claude-haiku-4-5</span></label>
+  <label>Packet calls in parallel <input name="packet_concurrency" type="number" min="1" max="16" value="{{ settings.packet_concurrency }}"></label>
+  <label>Use language servers when installed <input name="use_language_servers" type="checkbox" value="1"{% if settings.use_language_servers %} checked{% endif %}> <span class="muted small">pyright, gopls, typescript-language-server</span></label>
+  <label>Budget cap per AI Scan run (USD) <input name="budget_usd_per_run" type="number" step="0.5" min="0.5" value="{{ settings.budget_usd_per_run }}"></label>
+  <label>Max agent turns per AI Scan session <input name="max_ai_turns" type="number" min="10" value="{{ settings.max_ai_turns }}"></label>
+  <label>Largest file to parse (bytes) <input name="max_file_bytes" type="number" min="1000" value="{{ settings.max_file_bytes }}"></label>
+  <label>Web port <input name="port" type="number" min="1024" max="65535" value="{{ settings.port }}"> <span class="muted small">takes effect on next start</span></label>
+  <button type="submit">Save</button>
+</form>
+<p class="muted small">Data folder: <code>{{ home }}</code>. GitHub tokens are stored in <code>secrets.json</code> there, readable only by you.</p>
+{% endblock %}

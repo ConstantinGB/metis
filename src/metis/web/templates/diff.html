@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} · diff{% endblock %}
+{% block nav %}<a href="/p/{{ project.name }}">{{ project.name }}</a>
+<a href="/p/{{ project.name }}/browse">Browse</a><a href="/p/{{ project.name }}/diff" class="current">Diff</a>{% endblock %}
+{% block content %}
+<h1>Compare branches</h1>
+{% if not repos %}<p class="muted">No git repositories in this project.</p>{% else %}
+<form method="get" action="/p/{{ project.name }}/diff" class="inline-form">
+  <select name="repo_name" onchange="this.form.base.value='';this.form.head.value='';this.form.submit()">
+    {% for r in repos %}<option value="{{ r.name }}"{% if repo and r.name == repo.name %} selected{% endif %}>{{ r.name }}</option>{% endfor %}
+  </select>
+  <label>base <select name="base">{% for b in repo.branches %}<option value="{{ b }}"{% if b == base %} selected{% endif %}>{{ b }}</option>{% endfor %}</select></label>
+  <label>head <select name="head">{% for b in repo.branches %}<option value="{{ b }}"{% if b == head or (not head and b == repo.active_branch) %} selected{% endif %}>{{ b }}</option>{% endfor %}</select></label>
+  <button>Compare</button>
+</form>
+
+{% if base and head %}
+<h2>{{ base }} → {{ head }}</h2>
+{% if commits %}<details><summary>{{ commits|length }} commit{{ 's' if commits|length != 1 }}</summary><pre>{{ commits|join('\n') }}</pre></details>{% endif %}
+{% if files %}
+<div id="jobs" data-poll="/p/{{ project.name }}/jobs" data-active="{{ 'true' if explain_job else 'false' }}" class="hidden-jobs"></div>
+<section class="explanation">
+  {% if explanation %}
+    <h3>What changed, in plain language</h3>
+    <div class="md">{{ explanation.explanation|md|safe }}</div>
+    <p class="muted small">generated {{ explanation.generated_at.strftime('%Y-%m-%d %H:%M') }} · ${{ '%.2f'|format(explanation.cost_usd) }}{% if explanation.model %} · {{ explanation.model }}{% endif %}</p>
+  {% endif %}
+  {% if explain_job %}<p class="muted">Claude is explaining the changes… this page refreshes when it is done.</p>
+  {% else %}
+  <form method="post" action="/p/{{ project.name }}/diff/explain">
+    <input type="hidden" name="repo_name" value="{{ repo.name }}"><input type="hidden" name="base" value="{{ base }}"><input type="hidden" name="head" value="{{ head }}">
+    <button>{{ 'Explain again' if explanation else 'Explain changes' }}</button>
+  </form>
+  {% endif %}
+</section>
+<table class="numstat">
+<thead><tr><th>File</th><th>+</th><th>−</th></tr></thead>
+<tbody>{% for a, d, f in files %}
+<tr><td><a href="/p/{{ project.name }}/browse?path={{ quote('f:' ~ repo.name ~ ':' ~ f) }}">{{ f }}</a></td><td class="add">+{{ a }}</td><td class="del">−{{ d }}</td></tr>
+{% endfor %}</tbody></table>
+{% for f, text in diffs.items() %}
+<details class="diff"><summary>{{ f }}</summary><pre class="diff-text">{{ text }}</pre></details>
+{% endfor %}
+{% else %}<p class="muted">No differences between these branches.</p>{% endif %}
+{% endif %}{% endif %}
+{% endblock %}

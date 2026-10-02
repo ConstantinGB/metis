@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} · browse{% endblock %}
+{% block mainclass %}browse{% endblock %}
+{% block nav %}<a href="/p/{{ project.name }}">{{ project.name }}</a>
+<a href="/p/{{ project.name }}/browse" class="current">Browse</a><a href="/p/{{ project.name }}/diff">Diff</a>{% endblock %}
+{% block content %}
+<div id="browser">
+  <aside class="tree">
+    <div class="searchbar">
+      <input id="search" type="search" placeholder="Search files and functions" autocomplete="off">
+      <button id="ai-toggle" type="button" class="toggle" data-on="0" title="{% if ai_ok %}Ask in plain language{% else %}AI unavailable: Claude Code not logged in{% endif %}"{% if not ai_ok %} disabled{% endif %}>AI</button>
+    </div>
+    <div class="tree-body">{{ tree|safe }}</div>
+  </aside>
+  <div id="workspace">
+    <div id="tabs"></div>
+    <div id="columns">
+      {% for c in cards %}{% with col=c.col, card=c.card, html=c.html %}{% include "card.html" %}{% endwith %}{% endfor %}
+      {% if not cards %}<div class="hint"><p>Click a repository, folder or file on the left, or search.</p>
+        <p class="muted">Each click opens a card to the right. Inside a card, click a function, import, connection, or a name in the source to keep following the code. Ctrl-click (or middle-click) opens the next card in a new tab.</p></div>{% endif %}
+    </div>
+  </div>
+</div>
+<script id="metis-state" type="application/json">{{ state|safe }}</script>
+{% endblock %}
