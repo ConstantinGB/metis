@@ -1,0 +1,13 @@
+<div class="jobs" data-active="{{ 'true' if active else 'false' }}">
+{% if jobs %}
+{% for j in jobs %}
+<div class="job {{ j.status }}">
+  <span class="kind">{{ j.kind }}</span>{% if j.repo %} <span class="muted">{{ j.repo }}{% if j.branch %}@{{ j.branch }}{% endif %}</span>{% endif %}
+  <span class="status">{{ j.status }}</span>
+  {% if j.active %}<progress max="1" value="{{ j.progress }}"></progress>{% endif %}
+  <span class="muted small">{{ j.message }}</span>
+  {% if j.error %}<div class="error small">{{ j.error }}</div>{% endif %}
+</div>
+{% endfor %}
+{% else %}<p class="muted small">No jobs yet.</p>{% endif %}
+</div>

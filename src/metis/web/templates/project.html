@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} · METIS{% endblock %}
+{% block nav %}<a href="/p/{{ project.name }}">{{ project.name }}</a>
+<a href="/p/{{ project.name }}/browse">Browse</a><a href="/p/{{ project.name }}/diff">Diff</a>{% endblock %}
+{% block content %}
+<h1>{{ project.name }}</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+{% if rows %}
+<table class="repos">
+<thead><tr><th>Repository</th><th>Branch</th><th>Local Scan</th><th>AI Scan</th><th>Actions</th></tr></thead>
+<tbody>
+{% for row in rows %}{% set repo = row.repo %}
+<tr>
+  <td><strong>{{ repo.name }}</strong><br><span class="muted small">{{ repo.source.describe() }}</span>
+      {% if repo.has_token %}<span class="tag">token</span>{% endif %}</td>
+  <td>
+    <form method="post" action="/p/{{ project.name }}/repos/{{ repo.name }}/branch" class="stack">
+      <select name="branch" onchange="this.form.submit()">
+        {% for b in repo.branches %}<option value="{{ b }}"{% if b == repo.active_branch %} selected{% endif %}>{{ b }}</option>{% endfor %}
+      </select>
+    </form>
+    {% if repo.is_git %}<form method="post" action="/p/{{ project.name }}/repos/{{ repo.name }}/refresh"><button class="link">refresh branches</button></form>{% endif %}
+  </td>
+  <td>{% if row.scan %}{{ row.scan.stats.files }} files, {{ row.scan.stats.symbols }} symbols, {{ row.scan.stats.edges }} connections
+      <br><span class="muted small">{{ row.scan.scanned_at.strftime('%Y-%m-%d %H:%M') }}{% if row.scan.commit %} · {{ row.scan.commit[:8] }}{% endif %}{% if row.scan.stats.lsp %} · LSP: {% for k, v in row.scan.stats.lsp.items() %}{{ k }} +{{ v }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}</span>
+      {% else %}<span class="muted">not scanned</span>{% endif %}
+      <form method="post" action="/p/{{ project.name }}/scan"><input type="hidden" name="repo_name" value="{{ repo.name }}"><button>Local Scan</button></form>
+  </td>
+  <td>{% if row.ai_done %}{{ row.ai_done }} / {{ row.ai_total }} files explained
+      <br><span class="muted small">${{ '%.2f'|format(row.index.total_cost_usd) }} spent{% if row.index.counts %} · {% for k, v in row.index.counts.items() %}{{ v }} {{ k }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}</span>
+      {% elif row.scan %}<span class="muted">{{ row.ai_total }} files to explain</span>{% else %}<span class="muted">run Local Scan first</span>{% endif %}
+      {% if row.scan %}
+      <form method="post" action="/p/{{ project.name }}/ai-scan" class="stack">
+        <input type="hidden" name="repo_name" value="{{ repo.name }}">
+        <button{% if not ai_ok %} disabled title="{{ ai_why }}"{% endif %}>AI Scan</button>
+        <label class="small"><input type="checkbox" name="force" value="1"> redo all</label>
+      </form>{% endif %}
+  </td>
+  <td><a href="/p/{{ project.name }}/browse?path={{ quote('r:' ~ repo.name) }}">browse</a>
+      <form method="post" action="/p/{{ project.name }}/repos/{{ repo.name }}/remove" onsubmit="return confirm('Remove {{ repo.name }} from the project?')"><button class="link danger">remove</button></form></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<p class="muted small">AI Scan uses model <code>{{ settings.model }}</code> with a cap of ${{ '%.2f'|format(settings.budget_usd_per_run) }} per run (change in <a href="/settings">Settings</a>).{% if search_cost %} AI search so far: ${{ '%.2f'|format(search_cost) }}.{% endif %}
+{% if not ai_ok %}<br>AI Scan is unavailable: {{ ai_why }}{% endif %}</p>
+{% else %}
+<p class="muted">No repositories yet. Paste a GitHub URL or a local folder path below.</p>
+{% endif %}
+
+<h2>Add repository</h2>
+<form method="post" action="/p/{{ project.name }}/repos" class="inline-form">
+  <input name="source" placeholder="https://github.com/org/repo  or  /path/to/folder" required size="50">
+  <input name="token" placeholder="GitHub token (private repos, optional)" type="password" size="28">
+  <button type="submit">Add and scan</button>
+</form>
+
+<h2>Jobs</h2>
+<div id="jobs" data-poll="/p/{{ project.name }}/jobs" data-active="{{ 'true' if active else 'false' }}">
+{% include "jobs.html" %}
+</div>
+
+<form method="post" action="/p/{{ project.name }}/delete" onsubmit="return confirm('Delete project {{ project.name }} and its clones and scans?')" class="footer-form">
+  <button class="link danger">Delete project</button>
+</form>
+{% endblock %}
